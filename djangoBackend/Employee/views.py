@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializer import EmployeeSerializer, EmployeeTableSerializer
-from .models import Employee
+from .models import Employee, Log
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -28,65 +28,105 @@ class CreateEmployee(APIView):
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print(e)
+            Log.objects.create(
+                description=f"Error al crear usuario: {e}",
+                level = Log.Level.CRITICAL
+            )
+            return Response({"message": "Error while creating user"}, status=status.HTTP_400_BAD_REQUEST)
+            
 
 #metodo para traer tabla de todos los trabajadores
 class EmployeeListView(ListAPIView):
     serializer_class = EmployeeTableSerializer
 
     def get_queryset(self):
-        queryset = Employee.objects.all()
+        try:
+            queryset = Employee.objects.all()
 
-        # parametros de filtro
-        is_active = self.request.query_params.get("is_active")
-        deparment = self.request.query_params.get("deparment")
-        name = self.request.query_params.get("name")
-        dni = self.request.query_params.get("dni")
+            # parametros de filtro
+            is_active = self.request.query_params.get("is_active")
+            deparment = self.request.query_params.get("deparment")
+            name = self.request.query_params.get("name")
+            dni = self.request.query_params.get("dni")
 
-        #aplicar filtro
-        if is_active is not None:
-            queryset = queryset.filter(is_active=is_active.lower() == "true")
+            #aplicar filtro
+            if is_active is not None:
+                queryset = queryset.filter(is_active=is_active.lower() == "true")
 
-        if deparment:
-            queryset = queryset.filter(deparment__iexact=deparment)
+            if deparment:
+                queryset = queryset.filter(deparment__iexact=deparment)
 
-        if name:
-            queryset = queryset.filter(name__icontains=name)
+            if name:
+                queryset = queryset.filter(name__icontains=name)
 
-        if dni:
-            queryset = queryset.filter(dni=dni)
-        
+            if dni:
+                queryset = queryset.filter(dni=dni)
+            
 
-        return queryset.order_by("-id")
+            return queryset.order_by("-id")
+        except Exception as e:
+            Log.objects.create(
+                description=f"Error al obtener tabla: {e}",
+                level = Log.Level.MEDIUM
+            )
+            return Response({"message": "Error while getting table"}, status=status.HTTP_400_BAD_REQUEST)
+            
+
 
 #metodo ayuda para conseguir el ENUM de los departamentos
 @api_view(["GET"])
 def get_deparments(request):
-    resp = {}
-    for value,full_name in Employee.Deparment.choices:
-        resp[value] = full_name
-    return Response(resp, status = status.HTTP_200_OK)
+    try:
+
+        resp = {}
+        for value,full_name in Employee.Deparment.choices:
+            resp[value] = full_name
+        return Response(resp, status = status.HTTP_200_OK)
+    
+    except Exception as e:
+        Log.objects.create(
+            description=f"Error al obtener departamentos: {e}",
+            level = Log.Level.MEDIUM
+        )
+        return Response({"message": "Error while getting deparments"}, status=status.HTTP_400_BAD_REQUEST)
+            
+
 
 
 #metodo para obtener usuario especifico para editar/eliminar
 @api_view(["GET"])
 def get_employee(request):
-    dni = request.query_params.get("dni")
-
-    if not dni:
-        return Response({"error": "parameter is missing"}, status=400)
+    try:
+        dni = request.query_params.get("dni")
+        if not dni:
+            return Response({"error": "parameter is missing"}, status=400)
     
-    employee = get_object_or_404(Employee, dni=dni)
-
-    return Response({"id":employee.id},status=status.HTTP_200_OK)
+        employee = get_object_or_404(Employee, dni=dni)
+        return Response({"id":employee.id},status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        Log.objects.create(
+            description=f"Error al obtener employee: {e}",
+            level = Log.Level.MEDIUM
+        )
+        return Response({"message": "Error while getting employee"}, status=status.HTTP_400_BAD_REQUEST)
+            
 
 
 #metodo para eliminar un employee
 @api_view(["DELETE"])
 def delete_employee(request, employee_id):
-    employee = get_object_or_404(Employee, id=employee_id)
-    employee.delete()
-    return Response({"message:" : "employee was deleted"},status=status.HTTP_204_NO_CONTENT)
+    try:
+        employee = get_object_or_404(Employee, id=employee_id)
+        employee.delete()
+        return Response({"message:" : "employee was deleted"},status=status.HTTP_204_NO_CONTENT)
+    except Exception as e:
+        Log.objects.create(
+            description=f"Error al Eliminar employee: {e}",
+            level = Log.Level.MEDIUM
+        )
+        return Response({"message": "Error while deleting employee"}, status=status.HTTP_400_BAD_REQUEST)
+            
 
 
 @api_view(["PATCH"])
@@ -97,30 +137,44 @@ def update_employee(request, employee_id):
     except Exception as e:
         return Response({'message': "Employee does not exist"},status=status.HTTP_404_NOT_FOUND)
     
-    new_name = request.data.get("name", None)
-    new_position = request.data.get("position", None)
-    new_deparment = request.data.get("deparment", None)
-    new_is_active = request.data.get("is_acticve", None)
+    
+    try:
+        new_name = request.data.get("name", None)
+        new_position = request.data.get("position", None)
+        new_deparment = request.data.get("deparment", None)
+        new_is_active = request.data.get("is_acticve", None)
 
-    if new_name is not None:
-        employee.name = new_name
+        if new_name is not None:
+            employee.name = new_name
 
-    if new_position is not None:
-        employee.position = new_position
+        if new_position is not None:
+            employee.position = new_position
 
-    if new_deparment is not None:
-        if new_deparment not in dict(Employee.Deparment.choices):
-            return Response(
-                {"deparment": "deparment does not exist"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        employee.deparment = new_deparment
+        if new_deparment is not None:
+            if new_deparment not in dict(Employee.Deparment.choices):
+                return Response(
+                    {"deparment": "deparment does not exist"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            employee.deparment = new_deparment
 
-    if new_is_active is not None:
-        employee.is_active = new_is_active
+        if new_is_active is not None:
+            employee.is_active = new_is_active
 
-    employee.save()
+        employee.save()
+        Log.objects.create(
+            description= f"Usuario id {employee_id} fue actualizado",
+            level = Log.Level.INFO
+        )
+        return Response({"message" : "Employee data updated"}, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        Log.objects.create(
+            description=f"Error al actualizar employee: {e}",
+            level = Log.Level.CRITICAL
+        )
+        return Response({"message": "Error while updating employee"}, status=status.HTTP_400_BAD_REQUEST)
+            
 
-    return Response({"message" : "Employee data updated"}, status=status.HTTP_200_OK)
 
 

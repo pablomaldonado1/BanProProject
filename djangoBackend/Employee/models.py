@@ -33,3 +33,15 @@ class Employee(models.Model):
 
     def __str__(self):
         return f"{self.name}-{self.dni}"
+
+
+class Log(models.Model):
+
+    class Level(models.IntegerChoices):
+        CRITICAL = 1, "Critical"
+        MEDIUM = 2, "Medium"
+        INFO = 3, "Informative"
+
+    creation_date = models.DateField(auto_now_add=True) #fecha de creacion del empleado
+    description = models.CharField(max_length=255)
+    level = models.IntegerField(choices=Level.choices, default = Level.INFO)
