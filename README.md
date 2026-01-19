@@ -1,4 +1,4 @@
-# Projecto Postulacion BanPro
+# Proyecto Postulacion BanPro
 
 Proyecto desarrollado como parte de una postulación laboral.  
 Consiste en un Backend Django con API REST para la gestión de empleados, permitiendo crear, listar, actualizar y desactivar empleados. Ademas contiene Logs en caso de error
