@@ -38,8 +38,11 @@ venv\Scripts\activate     # Windows
 ```bash
 pip install -r requirements.txt
 ```
+
 4. Crear migraciones
 ```bash
+# se debe configurar variables de entoro si se quiere usar posgres
+# ver mas abajo variables de enterono
 python manage.py makemigrations
 ```
 5. Ejecutar migraciones
@@ -48,7 +51,23 @@ python manage.py migrate
 ```
 
 ---
+## Variables de entorno
 
+El proyecto utiliza un archivo `.env` para manejar configuraciones sensibles como las credenciales de la base de datos.
+1. crea archivo .env
+
+2. usa el archico .env.example para ver como debes configurar tus variables de entorno con tu propio postgresql
+```env
+DB_NAME=your_database_name
+DB_USER=your_database_user
+DB_PASSWORD=your_database_password
+DB_HOST=localhost
+DB_PORT=5432
+
+```
+3. Asegurarse de que PostgreSQL esté corriendo y que la base de datos exista antes de ejecutar las migraciones.
+
+---
 ## Ejecucion
 
 ```bash
