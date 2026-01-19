@@ -25,7 +25,10 @@ class CreateEmployee(APIView):
                 )
 
             #guardar en log que se intento crear algo pero no funciono
-
+            Log.objects.create(
+                description=f"Error al crear usuario: {serializer.errors}",
+                level = Log.Level.MEDIUM
+            )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             Log.objects.create(
