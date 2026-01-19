@@ -13,9 +13,9 @@ class Employee(models.Model):
         FINANCE = 'FIN', 'Finance'
         OPERATION = 'OPS', 'Operations'
 
-    name = models.CharField(max_length=255) #Nombre completo;
+    name = models.CharField(max_length=150) #Nombre completo
     birthday = models.DateField()
-    position = models.CharField(max_length=100) #esto tambien puede ser su propio modelo
+    position = models.CharField(max_length=100) #Evaluar si esto necesita ser su propio modelo
     deparment = models.CharField(max_length=5, choices=Deparment.choices)
     entry_date = models.DateField() #fecha de primer dia de trabajo
     creation_date = models.DateField(auto_now_add=True) #fecha de creacion del empleado
@@ -42,6 +42,6 @@ class Log(models.Model):
         MEDIUM = 2, "Medium"
         INFO = 3, "Informative"
 
-    creation_date = models.DateField(auto_now_add=True) #fecha de creacion del empleado
+    creation_date = models.DateField(auto_now_add=True)
     description = models.CharField(max_length=255)
     level = models.IntegerField(choices=Level.choices, default = Level.INFO)

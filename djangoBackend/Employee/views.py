@@ -10,10 +10,8 @@ from django.shortcuts import get_object_or_404
 
 
 
-
 #metodo para crear un usuario
 class CreateEmployee(APIView):
-
     def post(self, request):
         try:
             serializer = EmployeeSerializer(data=request.data)
@@ -24,10 +22,10 @@ class CreateEmployee(APIView):
                     status=status.HTTP_201_CREATED
                 )
 
-            #guardar en log que se intento crear algo pero no funciono
+            #guardar en log que se intento crear employee pero no funciono
             Log.objects.create(
                 description=f"Error al crear usuario: {serializer.errors}",
-                level = Log.Level.MEDIUM
+                level = Log.Level.CRITICAL
             )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -93,8 +91,21 @@ def get_deparments(request):
         )
         return Response({"message": "Error while getting deparments"}, status=status.HTTP_400_BAD_REQUEST)
             
-
-
+#metodo para obtener toda la info de un esmployee
+@api_view(["GET"])
+def get_employee_info(request,employee_id):
+    try:
+        employee = get_object_or_404(Employee, id=employee_id)
+        serializer = EmployeeSerializer(employee)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    except Exception as e:
+            Log.objects.create(
+                description=f"Error al obtener informacion del empleado: {e}",
+                level = Log.Level.MEDIUM
+            )
+            return Response({"message": "Error while getting employee info"}, status=status.HTTP_400_BAD_REQUEST)
+            
 
 #metodo para obtener usuario especifico para editar/eliminar
 @api_view(["GET"])
@@ -105,7 +116,7 @@ def get_employee(request):
             return Response({"error": "parameter is missing"}, status=400)
     
         employee = get_object_or_404(Employee, dni=dni)
-        return Response({"id":employee.id},status=status.HTTP_200_OK)
+        return Response({"id":employee.id, "name": employee.name},status=status.HTTP_200_OK)
     
     except Exception as e:
         Log.objects.create(
